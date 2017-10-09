@@ -1,0 +1,42 @@
+---
+description: "Add members to a hostgroup."
+enabled: true
+runner_type: "python-script"
+entry_point: lib/action.py
+name: "hostgroup_add_member"
+parameters:
+  method:
+    type: string
+    description: "Name of command to be executed."
+    default: "hostgroup_add_member"
+    immutable: true
+  args:
+    type: array
+    description: "Arguments to pass to the host-add action."
+    required: false
+  options:
+    type: object
+    description: "Parameters needed to pass to the host-add action."
+    required: false
+  session:
+    type: string
+    description: "Login session cookie. If empty then username/password will be used to login prior to running this operation"
+    required: false
+    secret: true
+  connection:
+    type: string
+    description: "Name of <connection> from this pack's configuration that specifies how to connect to a IPA server."
+    required: false
+  server:
+    type: string
+    description: "Optional override of the IPA server in <connection> (required if <connection> is not specified)."
+    required: false
+  username:
+    type: string
+    description: "Optional override of the IPA username in <connection> (example: username@domain.tld) (required if <connection> is not specified)."
+    required: false
+  password:
+    type: string
+    description: "Optional override of the IPA password in <connection>. (required if <connection> is not specified)"
+    required: false
+    secret: true

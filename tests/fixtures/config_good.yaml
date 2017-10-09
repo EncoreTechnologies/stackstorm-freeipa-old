@@ -1,0 +1,13 @@
+---
+freeipa:
+  base:
+    server: abc
+    user: Administrator
+    password: PassworD!
+  full:
+    method: 'method1'
+    args: 'args1'
+    params: ['p1':pp1]
+    server: server1
+    user: user1
+    password: pwd1
