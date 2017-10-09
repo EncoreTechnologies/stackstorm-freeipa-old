@@ -171,6 +171,10 @@ class BaseAction(Action):
         """Called by main entry point for the StackStorm actions to execute the operation.
         :returns: json-encoded content of the response to the HTTP request, if any
         """
+        if not kwargs_dict['args']:
+            kwargs_dict['args'] = []
+        if not kwargs_dict['options']:
+            kwargs_dict['options'] = {}
         data = {"id": 0,
                 "method": kwargs_dict['method'],
                 "params": [kwargs_dict['args'],
@@ -209,4 +213,27 @@ class BaseAction(Action):
         if kwargs_dict['method'] == 'login':
             return session
         else:
+            # get the server version
+            response = self._execute(session, server, {'method': 'ping',
+                                                       'args': [],
+                                                       'options': {}})
+            ping_good = response[0]
+            result = response[1]
+
+            # retrieve server version from result and add it to the
+            # options for the real request.
+            # this avoids the error message:
+            # "API Version number was not sent, forward compatibility not guaranteed. Assuming server's API version, x.xxx"
+            if ((ping_good and
+                 ('result' in result) and
+                 ('messages' in result['result']) and
+                 (len(result['result']['messages']) > 0) and
+                 ('data' in result['result']['messages'][0]) and
+                 ('server_version' in result['result']['messages'][0]['data']))):
+
+                version = result['result']['messages'][0]['data']['server_version']
+                if not kwargs_dict['options']:
+                    kwargs_dict['options'] = {}
+                kwargs_dict['options']['version'] = version
+
             return self._execute(session, server, kwargs_dict)
