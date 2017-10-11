@@ -1,3 +1,5 @@
+[![Build Status](https://circleci.com/gh/EncoreTechnologies/stackstorm-freeipa.svg?style=shield&circle-token=:circle-token)](https://circleci.com/gh/EncoreTechnologies/stackstorm-freeipa) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
 # freeipa Integration Pack
 
 # <a name="Introduction"></a> Introduction
@@ -30,7 +32,7 @@ freeipa:
     user: <username@domain.tld (preferred) or domain\username>
     password: <password for username>
   <connection-name-3>:
-    ... # note: multiple connections can be specified!
+    ... # note: multiple connections can be specified!
 ```
 
 ## <a name="SchemaExample"></a> Schema Example
