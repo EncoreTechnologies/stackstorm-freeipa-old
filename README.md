@@ -1,6 +1,6 @@
 [![Build Status](https://circleci.com/gh/EncoreTechnologies/stackstorm-freeipa.svg?style=shield&circle-token=:circle-token)](https://circleci.com/gh/EncoreTechnologies/stackstorm-freeipa) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-# freeipa Integration Pack
+# FreeIPA Integration Pack
 
 # <a name="Introduction"></a> Introduction
 This pack provides integration with the FreeIPA API (https://www.freeipa.org/)
