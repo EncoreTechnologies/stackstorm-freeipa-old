@@ -1,14 +1,14 @@
 ---
-description: "Add members to a hostgroup."
+description: "Delete a host."
 enabled: true
 runner_type: "python-script"
 entry_point: lib/action.py
-name: "hostgroup_add_member"
+name: "host_del"
 parameters:
   method:
     type: string
     description: "Name of command to be executed."
-    default: "hostgroup_add_member"
+    default: "host_del"
     immutable: true
   args:
     type: array

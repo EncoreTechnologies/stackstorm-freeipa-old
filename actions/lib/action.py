@@ -1,10 +1,11 @@
+import re
 import requests
-import json
+import urllib3
 
 from st2actions.runners.pythonrunner import Action
 
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
-requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+urllib3.disable_warnings()
+requests.packages.urllib3.disable_warnings()  # pylint: disable=no-member
 
 #                         (key, required, default)
 CONFIG_CONNECTION_KEYS = [('server', True, ""),
@@ -21,6 +22,7 @@ class BaseAction(Action):
         """
         super(BaseAction, self).__init__(config)
         self.session = requests.Session()
+        self.session.verify = False
 
     def _get_del_arg(self, key, kwargs_dict):
         """Attempts to retrieve an argument from kwargs with key.
@@ -100,7 +102,6 @@ class BaseAction(Action):
                                " is required: {0}".format(key))
         return True
 
-
     def _raise_for_status(self, response):
         """Raises stored :class:`requests.HTTPError`, if one occurred.
         Copied from requests package, but adds in response.content to the exception
@@ -139,21 +140,23 @@ class BaseAction(Action):
         return 'https://{0}/ipa{1}'.format(server, endpoint)
 
     def _login(self, connection):
-        """Performs the login operation on the user
-        :param connect: a dict containing values for 'server', 'username' and 'password'
-        :returns: the session token upon successful login
+        """Attempts to login to the FreeIPA server given the connection information.
+        :param connect: dict containing values for 'server', 'username' and 'password'
+        :returns: login session token upon successful login
         :rtype: string
         """
         server = connection['server']
         username = connection['username']
         password = connection['password']
-        ipaurl = self._ipa_url(server, '/session/login_password')
-        login_headers = {"referer": self._ipa_url(server),
-                         "Content-Type": "application/x-www-form-urlencoded",
-                         "Accept": "text/plain"}
+
+        url = self._ipa_url(server, '/session/login_password')
+        headers = {"referer": self._ipa_url(server),
+                   "Content-Type": "application/x-www-form-urlencoded",
+                   "Accept": "text/plain"}
         payload = "user={0}&password={1}".format(username, password)
-        response = self.session.post(ipaurl,
-                                     headers=login_headers,
+
+        response = self.session.post(url,
+                                     headers=headers,
                                      data=payload,
                                      verify=False)
         self._raise_for_status(response)
@@ -167,32 +170,62 @@ class BaseAction(Action):
         self.logger.debug('Successfully logged in as {0}'.format(username))
         return session
 
-    def _execute(self, session, server, kwargs_dict):
+    def _execute(self, session, server, kwargs_dict, api_version=None):
         """Called by main entry point for the StackStorm actions to execute the operation.
         :returns: json-encoded content of the response to the HTTP request, if any
         """
-        if not kwargs_dict['args']:
+        if ('args' not in kwargs_dict) or (not kwargs_dict['args']):
             kwargs_dict['args'] = []
-        if not kwargs_dict['options']:
+        if ('options' not in kwargs_dict) or (not kwargs_dict['options']):
             kwargs_dict['options'] = {}
-        data = {"id": 0,
-                "method": kwargs_dict['method'],
-                "params": [kwargs_dict['args'],
-                           kwargs_dict['options']]}
+        if api_version:
+            kwargs_dict['options']['version'] = api_version
+
         url = self._ipa_url(server, '/session/json')
         headers = {"referer": self._ipa_url(server),
                    "Content-Type": "application/json",
                    "Accept": "application/json"}
+        payload = {"id": 0,
+                   "method": kwargs_dict['method'],
+                   "params": [kwargs_dict['args'],
+                              kwargs_dict['options']]}
+
         response = self.session.post(url,
                                      headers=headers,
-                                     json=data,
+                                     json=payload,
                                      verify=False,
                                      cookies={'ipa_session': session})
         self._raise_for_status(response)
+
         result_data = response.json()
-        if 'error' in result_data:
+        if 'error' in result_data and result_data['error']:
             return (False, result_data)
-        return (True, results)
+        return (True, result_data)
+
+    def _get_api_version(self, session, server):
+        # get the server version
+        response = self._execute(session, server, {'method': 'ping'})
+        ping_good = response[0]
+        data = response[1]
+
+        # retrieve server version from result and add it to the
+        # options for the real request.
+        # this avoids the error message:
+        # "API Version number was not sent, forward compatibility not
+        # guaranteed. Assuming server's API version, x.xxx"
+        api_version = None
+        if ((ping_good and
+             ('result' in data) and
+             ('summary' in data['result']))):
+            # parse the API version from a "summary" string that looks like:
+            # "IPA server version 4.5.0. API version 2.228"
+            match = re.search('API version ([0-9]+\.[0-9]+)',
+                              data['result']['summary'])
+            if match:
+                api_version = match.group(1)
+
+        self.logger.debug('API Version: {0}'.format(api_version))
+        return api_version
 
     def run(self, **kwargs):
         """Main entry point for the StackStorm actions to execute the operation.
@@ -213,27 +246,5 @@ class BaseAction(Action):
         if kwargs_dict['method'] == 'login':
             return session
         else:
-            # get the server version
-            response = self._execute(session, server, {'method': 'ping',
-                                                       'args': [],
-                                                       'options': {}})
-            ping_good = response[0]
-            result = response[1]
-
-            # retrieve server version from result and add it to the
-            # options for the real request.
-            # this avoids the error message:
-            # "API Version number was not sent, forward compatibility not guaranteed. Assuming server's API version, x.xxx"
-            if ((ping_good and
-                 ('result' in result) and
-                 ('messages' in result['result']) and
-                 (len(result['result']['messages']) > 0) and
-                 ('data' in result['result']['messages'][0]) and
-                 ('server_version' in result['result']['messages'][0]['data']))):
-
-                version = result['result']['messages'][0]['data']['server_version']
-                if not kwargs_dict['options']:
-                    kwargs_dict['options'] = {}
-                kwargs_dict['options']['version'] = version
-
-            return self._execute(session, server, kwargs_dict)
+            api_version = self._get_api_version(session, server)
+            return self._execute(session, server, kwargs_dict, api_version=api_version)
