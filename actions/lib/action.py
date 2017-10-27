@@ -2,7 +2,7 @@ import re
 import requests
 import urllib3
 
-from st2actions.runners.pythonrunner import Action
+from st2common.runners.base_action import Action
 
 urllib3.disable_warnings()
 requests.packages.urllib3.disable_warnings()  # pylint: disable=no-member
