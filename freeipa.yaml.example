@@ -1,6 +1,6 @@
 ---
-freeipa:
-  dev:
+connections:
+  default:
     server: "ipa1.dev.domain.tld"
     username: "devusername"
     password: "devpassword"
