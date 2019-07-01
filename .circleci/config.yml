@@ -1,7 +1,7 @@
-version: 2.1
+version: 2
 
 jobs:
-  build:
+  build_and_test:
     docker:
       - image: circleci/python:2.7
       - image: rabbitmq:3
@@ -14,6 +14,7 @@ jobs:
           command: make all
 
 workflows:
-  build:
+  version: 2
+  build_test_deploy:
     jobs:
-      - build
+      - build_and_test
