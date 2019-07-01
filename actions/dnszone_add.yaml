@@ -1,0 +1,149 @@
+---
+description: ""
+enabled: true
+runner_type: "python-script"
+entry_point: ipa_action.py
+name: dnszone_add
+pack: freeipa
+parameters:
+############################################################################
+# begin unique params for this action
+  idnsname:
+    type: string
+  addattr:
+    type: array
+    items:
+      type: string
+  all:
+    type: boolean
+    required: true
+    default: False
+  dnsclass:
+    type: string
+    enum:
+      - IN
+      - CS
+      - CH
+      - HS
+
+  dnsdefaultttl:
+    type: integer
+  dnsttl:
+    type: integer
+  force:
+    type: boolean
+    required: true
+    default: False
+  idnsallowdynupdate:
+    type: boolean
+    required: true
+    default: False
+  idnsallowquery:
+    type: string
+    required: true
+    default: any;
+  idnsallowsyncptr:
+    type: boolean
+  idnsallowtransfer:
+    type: string
+    required: true
+    default: none;
+  idnsforwarders:
+    type: array
+    items:
+      type: string
+  idnsforwardpolicy:
+    type: string
+    enum:
+      - only
+      - first
+      - none
+
+  idnssecinlinesigning:
+    type: boolean
+    default: False
+  idnssoaexpire:
+    type: integer
+    required: true
+    default: 1209600
+  idnssoaminimum:
+    type: integer
+    required: true
+    default: 3600
+  idnssoamname:
+    type: string
+  idnssoarefresh:
+    type: integer
+    required: true
+    default: 3600
+  idnssoaretry:
+    type: integer
+    required: true
+    default: 900
+  idnssoarname:
+    type: string
+  idnssoaserial:
+    type: integer
+    required: true
+  idnsupdatepolicy:
+    type: string
+    required: true
+  ip_address:
+    type: string
+  name_from_ip:
+    type: string
+  nsec3paramrecord:
+    type: string
+  raw:
+    type: boolean
+    required: true
+    default: False
+  setattr:
+    type: array
+    items:
+      type: string
+  skip_nameserver_check:
+    type: boolean
+    required: true
+    default: False
+  skip_overlap_check:
+    type: boolean
+    required: true
+    default: False
+  version:
+    type: string
+############################################################################
+# begin static invocation params
+  method:
+    type: string
+    description: "Name of IPA command to be executed."
+    default: "dnszone_add"
+    immutable: true
+############################################################################
+# begin connection params
+  session:
+    type: string
+    description: "Login session cookie. If empty then username/password will be used to login prior to running this operation"
+    required: false
+    secret: true
+  connection:
+    type: string
+    description: "Name of <connection> from this pack's configuration that specifies how to connect to a IPA server."
+    required: false
+  server:
+    type: string
+    description: "Optional override of the IPA server in <connection> (required if <connection> is not specified)."
+    required: false
+  username:
+    type: string
+    description: "Optional override of the IPA username in <connection> (example: username@domain.tld) (required if <connection> is not specified)."
+    required: false
+  password:
+    type: string
+    description: "Optional override of the IPA password in <connection>. (required if <connection> is not specified)"
+    required: false
+    secret: true
+  verify_ssl:
+    type: boolean
+    description: "Verify SSL certificates on the server"
+    required: false

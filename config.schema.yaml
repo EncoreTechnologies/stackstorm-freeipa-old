@@ -1,13 +1,18 @@
 ---
-freeipa:
+verify_ssl:
+  type: boolean
+  description: "Verify SSL certificates on the server"
+  default: true
+
+connections:
   type: "object"
   required: true
   patternProperties:
       "^\\w+":
-        "$ref": "#/properties/connections"
+        "$ref": "#/properties/connection"
   additionalProperties: false
 
-connections:
+connection:
   type: "object"
   properties:
     server:
@@ -23,4 +28,7 @@ connections:
       description: "Password to login to the FreeIPA server"
       required: true
       secret: true
+    verify_ssl:
+      type: boolean
+      description: "Verify SSL certificates on the server"
   additionalProperties: false

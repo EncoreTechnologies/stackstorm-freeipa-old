@@ -1,0 +1,19 @@
+#!/usr/bin/env python
+
+IPA_COMMAND_ARGS_OPTIONS = {
+{%- for action in actions %}
+    "{{ action.name }}": {
+        "args": [
+            {%- for arg in action.args %}
+            "{{ arg.name }}",
+            {%- endfor %}
+        ],
+        "options": [
+            {%- for option in action.options %}
+            "{{ option.name }}",
+            {%- endfor %}
+        ]
+    },
+{%- endfor %}
+}
+{{ '' }}

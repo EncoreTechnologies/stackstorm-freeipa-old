@@ -11,7 +11,7 @@ export PACK_NAME := $(shell grep "name:" pack.yaml | awk '{ print $$2 }')
 all: .DEFAULT
 
 .PHONY: clean
-clean: clean-ci-repo clean-pyc
+clean: clean-ci-repo clean-pyc clean-etc
 
 .PHONY: pack-name
 pack-name: .pack-name
@@ -51,7 +51,7 @@ clean-pyc:
 	@echo
 	@echo "==================== clean-pyc ===================="
 	@echo
-	find $(ROOT_DIR) -name 'ci' -prune -or -name '.git' -or -type f -name "*.pyc" -print | xargs rm
+	find $(ROOT_DIR) -name 'ci' -prune -or -name '.git' -or -type f -name "*.pyc" -print | xargs -r rm
 
 # list all makefile targets
 .PHONY: list

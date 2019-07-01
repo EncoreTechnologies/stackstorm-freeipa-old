@@ -1,0 +1,184 @@
+---
+description: ""
+enabled: true
+runner_type: "python-script"
+entry_point: ipa_action.py
+name: stageuser_add
+pack: freeipa
+parameters:
+############################################################################
+# begin unique params for this action
+  uid:
+    type: string
+  addattr:
+    type: array
+    items:
+      type: string
+  all:
+    type: boolean
+    required: true
+    default: False
+  carlicense:
+    type: array
+    items:
+      type: string
+  cn:
+    type: string
+    required: true
+  departmentnumber:
+    type: array
+    items:
+      type: string
+  displayname:
+    type: string
+    required: true
+  employeenumber:
+    type: string
+  employeetype:
+    type: string
+  facsimiletelephonenumber:
+    type: array
+    items:
+      type: string
+  from_delete:
+    type: boolean
+  gecos:
+    type: string
+    required: true
+  gidnumber:
+    type: integer
+  givenname:
+    type: string
+  homedirectory:
+    type: string
+  initials:
+    type: string
+    required: true
+  ipasshpubkey:
+    type: array
+    items:
+      type: string
+  ipatokenradiusconfiglink:
+    type: string
+  ipatokenradiususername:
+    type: string
+  ipauserauthtype:
+    type: array
+    enum:
+      - password
+      - radius
+      - otp
+
+    items:
+      type: string
+  krbpasswordexpiration:
+    type: string
+  krbprincipalexpiration:
+    type: string
+  krbprincipalname:
+    type: array
+    required: true
+    items:
+      type: string
+  l:
+    type: string
+  loginshell:
+    type: string
+  mail:
+    type: array
+    items:
+      type: string
+  manager:
+    type: string
+  mobile:
+    type: array
+    items:
+      type: string
+  no_members:
+    type: boolean
+    required: true
+    default: False
+  ou:
+    type: string
+  pager:
+    type: array
+    items:
+      type: string
+  postalcode:
+    type: string
+  preferredlanguage:
+    type: string
+  random:
+    type: boolean
+    required: true
+    default: False
+  raw:
+    type: boolean
+    required: true
+    default: False
+  setattr:
+    type: array
+    items:
+      type: string
+  sn:
+    type: string
+  st:
+    type: string
+  street:
+    type: string
+  telephonenumber:
+    type: array
+    items:
+      type: string
+  title:
+    type: string
+  uidnumber:
+    type: integer
+  usercertificate:
+    type: array
+    items:
+      type: string
+  userclass:
+    type: array
+    items:
+      type: string
+  userpassword:
+    type: string
+    secret: True
+  version:
+    type: string
+############################################################################
+# begin static invocation params
+  method:
+    type: string
+    description: "Name of IPA command to be executed."
+    default: "stageuser_add"
+    immutable: true
+############################################################################
+# begin connection params
+  session:
+    type: string
+    description: "Login session cookie. If empty then username/password will be used to login prior to running this operation"
+    required: false
+    secret: true
+  connection:
+    type: string
+    description: "Name of <connection> from this pack's configuration that specifies how to connect to a IPA server."
+    required: false
+  server:
+    type: string
+    description: "Optional override of the IPA server in <connection> (required if <connection> is not specified)."
+    required: false
+  username:
+    type: string
+    description: "Optional override of the IPA username in <connection> (example: username@domain.tld) (required if <connection> is not specified)."
+    required: false
+  password:
+    type: string
+    description: "Optional override of the IPA password in <connection>. (required if <connection> is not specified)"
+    required: false
+    secret: true
+  verify_ssl:
+    type: boolean
+    description: "Verify SSL certificates on the server"
+    required: false

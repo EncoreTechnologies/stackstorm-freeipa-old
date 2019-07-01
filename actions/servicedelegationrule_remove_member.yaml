@@ -1,0 +1,65 @@
+---
+description: ""
+enabled: true
+runner_type: "python-script"
+entry_point: ipa_action.py
+name: servicedelegationrule_remove_member
+pack: freeipa
+parameters:
+############################################################################
+# begin unique params for this action
+  cn:
+    type: string
+  all:
+    type: boolean
+    required: true
+    default: False
+  no_members:
+    type: boolean
+    required: true
+    default: False
+  principal:
+    type: array
+    items:
+      type: string
+  raw:
+    type: boolean
+    required: true
+    default: False
+  version:
+    type: string
+############################################################################
+# begin static invocation params
+  method:
+    type: string
+    description: "Name of IPA command to be executed."
+    default: "servicedelegationrule_remove_member"
+    immutable: true
+############################################################################
+# begin connection params
+  session:
+    type: string
+    description: "Login session cookie. If empty then username/password will be used to login prior to running this operation"
+    required: false
+    secret: true
+  connection:
+    type: string
+    description: "Name of <connection> from this pack's configuration that specifies how to connect to a IPA server."
+    required: false
+  server:
+    type: string
+    description: "Optional override of the IPA server in <connection> (required if <connection> is not specified)."
+    required: false
+  username:
+    type: string
+    description: "Optional override of the IPA username in <connection> (example: username@domain.tld) (required if <connection> is not specified)."
+    required: false
+  password:
+    type: string
+    description: "Optional override of the IPA password in <connection>. (required if <connection> is not specified)"
+    required: false
+    secret: true
+  verify_ssl:
+    type: boolean
+    description: "Verify SSL certificates on the server"
+    required: false

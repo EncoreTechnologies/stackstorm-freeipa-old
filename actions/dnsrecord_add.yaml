@@ -1,0 +1,337 @@
+---
+description: ""
+enabled: true
+runner_type: "python-script"
+entry_point: ipa_action.py
+name: dnsrecord_add
+pack: freeipa
+parameters:
+############################################################################
+# begin unique params for this action
+  dnszoneidnsname:
+    type: string
+  idnsname:
+    type: string
+  a6_part_data:
+    type: string
+  a6record:
+    type: array
+    items:
+      type: string
+  a_extra_create_reverse:
+    type: boolean
+    required: true
+    default: False
+  a_part_ip_address:
+    type: string
+  aaaa_extra_create_reverse:
+    type: boolean
+    required: true
+    default: False
+  aaaa_part_ip_address:
+    type: string
+  aaaarecord:
+    type: array
+    items:
+      type: string
+  addattr:
+    type: array
+    items:
+      type: string
+  afsdb_part_hostname:
+    type: string
+  afsdb_part_subtype:
+    type: integer
+  afsdbrecord:
+    type: array
+    items:
+      type: string
+  all:
+    type: boolean
+    required: true
+    default: False
+  aplrecord:
+    type: array
+    items:
+      type: string
+  arecord:
+    type: array
+    items:
+      type: string
+  cert_part_algorithm:
+    type: integer
+  cert_part_certificate_or_crl:
+    type: string
+  cert_part_key_tag:
+    type: integer
+  cert_part_type:
+    type: integer
+  certrecord:
+    type: array
+    items:
+      type: string
+  cname_part_hostname:
+    type: string
+  cnamerecord:
+    type: array
+    items:
+      type: string
+  dhcidrecord:
+    type: array
+    items:
+      type: string
+  dlv_part_algorithm:
+    type: integer
+  dlv_part_digest:
+    type: string
+  dlv_part_digest_type:
+    type: integer
+  dlv_part_key_tag:
+    type: integer
+  dlvrecord:
+    type: array
+    items:
+      type: string
+  dname_part_target:
+    type: string
+  dnamerecord:
+    type: array
+    items:
+      type: string
+  dnsclass:
+    type: string
+    enum:
+      - IN
+      - CS
+      - CH
+      - HS
+
+  dnsttl:
+    type: integer
+  ds_part_algorithm:
+    type: integer
+  ds_part_digest:
+    type: string
+  ds_part_digest_type:
+    type: integer
+  ds_part_key_tag:
+    type: integer
+  dsrecord:
+    type: array
+    items:
+      type: string
+  force:
+    type: boolean
+    required: true
+    default: False
+  hiprecord:
+    type: array
+    items:
+      type: string
+  ipseckeyrecord:
+    type: array
+    items:
+      type: string
+  keyrecord:
+    type: array
+    items:
+      type: string
+  kx_part_exchanger:
+    type: string
+  kx_part_preference:
+    type: integer
+  kxrecord:
+    type: array
+    items:
+      type: string
+  loc_part_altitude:
+    type: number
+  loc_part_h_precision:
+    type: number
+  loc_part_lat_deg:
+    type: integer
+  loc_part_lat_dir:
+    type: string
+    enum:
+      - N
+      - S
+
+  loc_part_lat_min:
+    type: integer
+  loc_part_lat_sec:
+    type: number
+  loc_part_lon_deg:
+    type: integer
+  loc_part_lon_dir:
+    type: string
+    enum:
+      - E
+      - W
+
+  loc_part_lon_min:
+    type: integer
+  loc_part_lon_sec:
+    type: number
+  loc_part_size:
+    type: number
+  loc_part_v_precision:
+    type: number
+  locrecord:
+    type: array
+    items:
+      type: string
+  mx_part_exchanger:
+    type: string
+  mx_part_preference:
+    type: integer
+  mxrecord:
+    type: array
+    items:
+      type: string
+  naptr_part_flags:
+    type: string
+  naptr_part_order:
+    type: integer
+  naptr_part_preference:
+    type: integer
+  naptr_part_regexp:
+    type: string
+  naptr_part_replacement:
+    type: string
+  naptr_part_service:
+    type: string
+  naptrrecord:
+    type: array
+    items:
+      type: string
+  ns_part_hostname:
+    type: string
+  nsecrecord:
+    type: array
+    items:
+      type: string
+  nsrecord:
+    type: array
+    items:
+      type: string
+  ptr_part_hostname:
+    type: string
+  ptrrecord:
+    type: array
+    items:
+      type: string
+  raw:
+    type: boolean
+    required: true
+    default: False
+  rprecord:
+    type: array
+    items:
+      type: string
+  rrsigrecord:
+    type: array
+    items:
+      type: string
+  setattr:
+    type: array
+    items:
+      type: string
+  sigrecord:
+    type: array
+    items:
+      type: string
+  spfrecord:
+    type: array
+    items:
+      type: string
+  srv_part_port:
+    type: integer
+  srv_part_priority:
+    type: integer
+  srv_part_target:
+    type: string
+  srv_part_weight:
+    type: integer
+  srvrecord:
+    type: array
+    items:
+      type: string
+  sshfp_part_algorithm:
+    type: integer
+  sshfp_part_fingerprint:
+    type: string
+  sshfp_part_fp_type:
+    type: integer
+  sshfprecord:
+    type: array
+    items:
+      type: string
+  structured:
+    type: boolean
+    required: true
+    default: False
+  tlsa_part_cert_association_data:
+    type: string
+  tlsa_part_cert_usage:
+    type: integer
+  tlsa_part_matching_type:
+    type: integer
+  tlsa_part_selector:
+    type: integer
+  tlsarecord:
+    type: array
+    items:
+      type: string
+  txt_part_data:
+    type: string
+  txtrecord:
+    type: array
+    items:
+      type: string
+  uri_part_priority:
+    type: integer
+  uri_part_target:
+    type: string
+  uri_part_weight:
+    type: integer
+  urirecord:
+    type: array
+    items:
+      type: string
+  version:
+    type: string
+############################################################################
+# begin static invocation params
+  method:
+    type: string
+    description: "Name of IPA command to be executed."
+    default: "dnsrecord_add"
+    immutable: true
+############################################################################
+# begin connection params
+  session:
+    type: string
+    description: "Login session cookie. If empty then username/password will be used to login prior to running this operation"
+    required: false
+    secret: true
+  connection:
+    type: string
+    description: "Name of <connection> from this pack's configuration that specifies how to connect to a IPA server."
+    required: false
+  server:
+    type: string
+    description: "Optional override of the IPA server in <connection> (required if <connection> is not specified)."
+    required: false
+  username:
+    type: string
+    description: "Optional override of the IPA username in <connection> (example: username@domain.tld) (required if <connection> is not specified)."
+    required: false
+  password:
+    type: string
+    description: "Optional override of the IPA password in <connection>. (required if <connection> is not specified)"
+    required: false
+    secret: true
+  verify_ssl:
+    type: boolean
+    description: "Verify SSL certificates on the server"
+    required: false

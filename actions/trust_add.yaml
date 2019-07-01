@@ -1,0 +1,98 @@
+---
+description: ""
+enabled: true
+runner_type: "python-script"
+entry_point: ipa_action.py
+name: trust_add
+pack: freeipa
+parameters:
+############################################################################
+# begin unique params for this action
+  cn:
+    type: string
+  addattr:
+    type: array
+    items:
+      type: string
+  all:
+    type: boolean
+    required: true
+    default: False
+  base_id:
+    type: integer
+  bidirectional:
+    type: boolean
+    default: False
+  external:
+    type: boolean
+    default: False
+  range_size:
+    type: integer
+  range_type:
+    type: string
+    enum:
+      - ipa-ad-trust
+      - ipa-ad-trust-posix
+
+  raw:
+    type: boolean
+    required: true
+    default: False
+  realm_admin:
+    type: string
+  realm_passwd:
+    type: string
+    secret: True
+  realm_server:
+    type: string
+  setattr:
+    type: array
+    items:
+      type: string
+  trust_secret:
+    type: string
+    secret: True
+  trust_type:
+    type: string
+    required: true
+    default: ad
+    enum:
+      - ad
+
+  version:
+    type: string
+############################################################################
+# begin static invocation params
+  method:
+    type: string
+    description: "Name of IPA command to be executed."
+    default: "trust_add"
+    immutable: true
+############################################################################
+# begin connection params
+  session:
+    type: string
+    description: "Login session cookie. If empty then username/password will be used to login prior to running this operation"
+    required: false
+    secret: true
+  connection:
+    type: string
+    description: "Name of <connection> from this pack's configuration that specifies how to connect to a IPA server."
+    required: false
+  server:
+    type: string
+    description: "Optional override of the IPA server in <connection> (required if <connection> is not specified)."
+    required: false
+  username:
+    type: string
+    description: "Optional override of the IPA username in <connection> (example: username@domain.tld) (required if <connection> is not specified)."
+    required: false
+  password:
+    type: string
+    description: "Optional override of the IPA password in <connection>. (required if <connection> is not specified)"
+    required: false
+    secret: true
+  verify_ssl:
+    type: boolean
+    description: "Verify SSL certificates on the server"
+    required: false
