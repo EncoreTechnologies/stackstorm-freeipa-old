@@ -1,4 +1,9 @@
 ---
+verify_ssl:
+  type: boolean
+  description: "Verify SSL certificates on the server"
+  default: true
+
 connections:
   type: "object"
   required: true
@@ -26,5 +31,4 @@ connection:
     verify_ssl:
       type: boolean
       description: "Verify SSL certificates on the server"
-      default: true
   additionalProperties: false

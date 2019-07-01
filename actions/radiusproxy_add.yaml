@@ -75,4 +75,4 @@ parameters:
   verify_ssl:
     type: boolean
     description: "Verify SSL certificates on the server"
-    default: true
+    required: false

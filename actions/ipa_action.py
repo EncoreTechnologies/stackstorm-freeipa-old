@@ -9,7 +9,6 @@ from st2common.runners.base_action import Action
 urllib3.disable_warnings()
 requests.packages.urllib3.disable_warnings()  # pylint: disable=no-member
 
-
 CONNECTION_OPTIONS = [
     'server',
     'username',
@@ -33,18 +32,15 @@ class IpaAction(Action):
             return kwargs
 
         # get the name of connection asked for during action invocation
-        con_name = kwargs.get('connections')
-        if not con_name:
-            return kwargs
-
-        # if we couldn't find the connection in the config (by name),
-        # then try checking if a 'default' connection is specified
-        # otherwise raise an error
-        if con_name not in self.config['connections']:
+        con_name = kwargs.get('connection')
+        if con_name:
+            if con_name not in self.config['connections']:
+                raise ValueError('Unable to find connection named "{}"in config'
+                                 .format(con_name))
+        else:
             con_name = 'default'
             if con_name not in self.config['connections']:
-                raise ValueError('Unable to find connection named "{}" or "default" in config'
-                                 .format(con_name))
+                return kwargs
 
         # lookup the credential by name
         connection = self.config['connections'][con_name]
@@ -56,6 +52,15 @@ class IpaAction(Action):
             # only set the property if the value in the credential object is set
             if v is not None:
                 kwargs[k] = v
+
+        # set defaults at the root of the config
+        for key in CONNECTION_OPTIONS:
+            # ensure the key is present in the connection?
+            if kwargs.get(key) is not None:
+                continue
+
+            if key in self.config and self.config[key] is not None:
+                kwargs[key] = self.config[key]
 
         return kwargs
 
@@ -71,13 +76,13 @@ class IpaAction(Action):
                 continue
 
             if 'connection' in connection:
-                raise KeyError("/opt/stackstorm/configs/freeipa.yaml missing key connections.{}.1}"
+                raise KeyError("/opt/stackstorm/configs/freeipa.yaml missing key connections.{}.{}"
                                .format(connection['connection'], key))
             else:
                 raise KeyError("Because the 'connection' action parameter was"
                                " not specified, the following action parameter"
                                " is required: {0}".format(key))
-        return True
+        return connection
 
     def _raise_for_status(self, response):
         """Raises stored :class:`requests.HTTPError`, if one occurred.
@@ -223,7 +228,7 @@ class IpaAction(Action):
 
     def run(self, **kwargs):
         connection = self._resolve_connection(**kwargs)
-        self._validate_connection(connection)
+        connection = self._validate_connection(connection)
         self.session.verify = connection['verify_ssl']
 
         if 'session' in kwargs and kwargs['session']:
