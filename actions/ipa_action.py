@@ -215,7 +215,7 @@ class IpaAction(Action):
              ('summary' in data['result']))):
             # parse the API version from a "summary" string that looks like:
             # "IPA server version 4.5.0. API version 2.228"
-            match = re.search('API version ([0-9]+\.[0-9]+)',
+            match = re.search(r'API version ([0-9]+\.[0-9]+)',
                               data['result']['summary'])
             if match:
                 api_version = match.group(1)
