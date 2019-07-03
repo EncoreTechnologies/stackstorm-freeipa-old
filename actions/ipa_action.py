@@ -35,8 +35,8 @@ class IpaAction(Action):
         con_name = kwargs.get('connection')
         if con_name:
             if con_name not in self.config['connections']:
-                raise ValueError('Unable to find connection named "{}"in config'
-                                 .format(con_name))
+                raise KeyError('Unable to find connection named "{}"in config'
+                               .format(con_name))
         else:
             con_name = 'default'
             if con_name not in self.config['connections']:
@@ -52,15 +52,6 @@ class IpaAction(Action):
             # only set the property if the value in the credential object is set
             if v is not None:
                 kwargs[k] = v
-
-        # set defaults at the root of the config
-        for key in CONNECTION_OPTIONS:
-            # ensure the key is present in the connection?
-            if kwargs.get(key) is not None:
-                continue
-
-            if key in self.config and self.config[key] is not None:
-                kwargs[key] = self.config[key]
 
         return kwargs
 
@@ -82,7 +73,7 @@ class IpaAction(Action):
                 raise KeyError("Because the 'connection' action parameter was"
                                " not specified, the following action parameter"
                                " is required: {0}".format(key))
-        return connection
+        return True
 
     def _raise_for_status(self, response):
         """Raises stored :class:`requests.HTTPError`, if one occurred.
@@ -153,34 +144,27 @@ class IpaAction(Action):
         self.logger.debug('Successfully logged in as {0}'.format(username))
         return session
 
-    def _execute(self, session, server, api_version=None, **kwargs):
-        """Called by main entry point for the StackStorm actions to execute the operation.
-        :returns: json-encoded content of the response to the HTTP request, if any
-        """
-        method = kwargs['method']
+    def _create_payload(self, method, api_version=None, **kwargs):
+        # lookup kwargs are in args vs options based on the auto-generated
+        # data, in IPA_COMMAND_ARGS_OPTIONS (this gets generated from etc/generate_actions.py)
+        method_args_options = IPA_COMMAND_ARGS_OPTIONS[method]
+
         # args go into an array
         args = []
-        # options go into a hash where it's the option name : value
-        options = {}
-        # lookup which kwargs are args vs options based on the auto-generated
-        # data, this comes from etc/generate_actions.py
-        method_args_options = IPA_COMMAND_ARGS_OPTIONS[method]
         for arg in method_args_options['args']:
             if arg in kwargs:
                 args.append(kwargs[arg])
+
+        # options go into a hash where it's the option name : value
+        options = {}
         for option in method_args_options['options']:
             if option in kwargs:
                 options[option] = kwargs[option]
 
+        # add in API version, if specified
         if api_version:
             options['version'] = api_version
 
-        url = self._ipa_url(server, '/session/json')
-        headers = {
-            "referer": self._ipa_url(server),
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-        }
         payload = {
             "id": 0,
             "method": method,
@@ -188,6 +172,19 @@ class IpaAction(Action):
                 args,
                 options
             ]
+        }
+        return payload
+
+    def _execute(self, session, server, method, **kwargs):
+        """Called by main entry point for the StackStorm actions to execute the operation.
+        :returns: json-encoded content of the response to the HTTP request, if any
+        """
+        payload = self._create_payload(method, **kwargs)
+        url = self._ipa_url(server, '/session/json')
+        headers = {
+            "referer": self._ipa_url(server),
+            "Content-Type": "application/json",
+            "Accept": "application/json"
         }
 
         response = self.session.post(url,
@@ -228,21 +225,24 @@ class IpaAction(Action):
 
     def run(self, **kwargs):
         connection = self._resolve_connection(**kwargs)
-        connection = self._validate_connection(connection)
+        self._validate_connection(connection)
         self.session.verify = connection['verify_ssl']
+        method = kwargs['method']
 
         if 'session' in kwargs and kwargs['session']:
-            session = kwargs['session']
             server = kwargs['server']
+            session = kwargs['session']
         else:
             server = connection['server']
             session = self._login(connection)
 
         del kwargs['server']
         del kwargs['session']
+        del kwargs['method']
+        del kwargs['verify_ssl']
 
-        if kwargs['method'] == 'login':
+        if method == 'login':
             return session
         else:
             api_version = self._get_api_version(session, server)
-            return self._execute(session, server, api_version=api_version, **kwargs)
+            return self._execute(session, server, method=method, api_version=api_version, **kwargs)

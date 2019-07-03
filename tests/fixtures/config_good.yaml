@@ -1,5 +1,9 @@
 ---
-freeipa:
+connections:
+  default:
+    server: abc123
+    username: xxx
+    password: yyy
   base:
     server: abc
     username: Administrator
@@ -8,3 +12,4 @@ freeipa:
     server: server1
     username: user1
     password: pwd1
+    verify_ssl: false

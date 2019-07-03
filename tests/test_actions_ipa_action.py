@@ -1,120 +1,95 @@
 from freeipa_base_action_test_case import FreeIPABaseActionTestCase
-from lib.action import BaseAction, CONFIG_CONNECTION_KEYS
+import ipa_action
+from ipa_command_args_options import IPA_COMMAND_ARGS_OPTIONS
 
 import copy
 import mock
 import requests
 
 
-class TestActionLibBaseAction(FreeIPABaseActionTestCase):
+class TestActionsIpaAction(FreeIPABaseActionTestCase):
     __test__ = True
-    action_cls = BaseAction
+    action_cls = ipa_action.IpaAction
 
     def test_init(self):
         action = self.get_action_instance({})
-        self.assertIsInstance(action, BaseAction)
-        self.assertNotEqual(action.session, None)
-
-    def test__get_del_arg_present(self):
-        action = self.get_action_instance({})
-        test_dict = {"key1": "value1",
-                     "key2": "value2"}
-        test_key = "key1"
-        expected_dict = {"key2": "value2"}
-        expected_value = test_dict["key1"]
-        result_value = action._get_del_arg(test_key, test_dict)
-        self.assertEqual(result_value, expected_value)
-        self.assertEqual(test_dict, expected_dict)
-
-    def test__get_del_arg_missing(self):
-        action = self.get_action_instance({})
-        test_dict = {"key1": "value1",
-                     "key2": "value2"}
-        test_key = "key3"
-        expected_dict = test_dict
-        expected_value = None
-        result_value = action._get_del_arg(test_key, test_dict)
-        self.assertEqual(result_value, expected_value)
-        self.assertEqual(test_dict, expected_dict)
+        self.assertIsInstance(action, ipa_action.IpaAction)
+        self.assertIsInstance(action.session, requests.Session)
 
     def test__resolve_connection_from_config(self):
         action = self.get_action_instance(self.config_good)
         connection_name = 'base'
-        connection_config = self.config_good['freeipa'][connection_name]
+        connection_config = self.config_good['connections'][connection_name]
         connection_expected = {'connection': connection_name}
         connection_expected.update(connection_config)
-        kwargs_dict = {'connection': connection_name}
-        connection_result = action._resolve_connection(kwargs_dict)
+        connection_result = action._resolve_connection(connection=connection_name)
         self.assertEqual(connection_result, connection_expected)
 
     def test__resolve_connection_from_config_missing(self):
         action = self.get_action_instance(self.config_good)
         connection_name = 'this_connection_doesnt_exist'
-        kwargs_dict = {'connection': connection_name}
         with self.assertRaises(KeyError):
-            action._resolve_connection(kwargs_dict)
+            action._resolve_connection(connection=connection_name)
 
     def test__resolve_connection_from_config_defaults(self):
         action = self.get_action_instance(self.config_good)
         connection_name = 'base'
-        connection_config = self.config_good['freeipa'][connection_name]
+        connection_config = self.config_good['connections'][connection_name]
         connection_expected = {'connection': connection_name}
         connection_expected.update(connection_config)
-        for key, required, default in CONFIG_CONNECTION_KEYS:
-            if not required and default:
-                connection_expected[key] = default
-
-        kwargs_dict = {'connection': connection_name}
-        connection_result = action._resolve_connection(kwargs_dict)
+        connection_result = action._resolve_connection(connection=connection_name)
         self.assertEqual(connection_result, connection_expected)
 
     def test__resolve_connection_from_kwargs(self):
         action = self.get_action_instance(self.config_blank)
-        kwargs_dict = {'connection': None,
-                       'server': 'kwargs_server',
-                       'username': 'kwargs_user',
-                       'password': 'kwargs_password'}
-        connection_expected = copy.deepcopy(kwargs_dict)
-        connection_result = action._resolve_connection(kwargs_dict)
+        kwargs = {'connection': None,
+                  'server': 'kwargs_server',
+                  'username': 'kwargs_user',
+                  'password': 'kwargs_password'}
+        connection_expected = copy.deepcopy(kwargs)
+        connection_result = action._resolve_connection(**kwargs)
         self.assertEqual(connection_result, connection_expected)
-        self.assertEqual(kwargs_dict, {})
 
     def test__resolve_connection_from_kwargs_defaults(self):
         action = self.get_action_instance(self.config_blank)
-        kwargs_dict = {'connection': None,
-                       'server': 'kwargs_server',
-                       'username': 'kwargs_user',
-                       'password': 'kwargs_password'}
-        connection_expected = copy.deepcopy(kwargs_dict)
-        for key, required, default in CONFIG_CONNECTION_KEYS:
-            if not required and default:
-                connection_expected[key] = default
-
-        connection_result = action._resolve_connection(kwargs_dict)
+        kwargs = {'connection': None,
+                  'server': 'kwargs_server',
+                  'username': 'kwargs_user',
+                  'password': 'kwargs_password'}
+        connection_expected = copy.deepcopy(kwargs)
+        connection_result = action._resolve_connection(**kwargs)
         self.assertEqual(connection_result, connection_expected)
-        self.assertEqual(kwargs_dict, {})
 
     def test__resolve_connection_from_kwargs_extras(self):
         action = self.get_action_instance(self.config_blank)
-        connection_expected = {'connection': None,
-                               'server': 'kwargs_server',
-                               'username': 'kwargs_user',
-                               'password': 'kwargs_password'}
-        kwargs_dict = copy.deepcopy(connection_expected)
-        kwargs_extras = {"extra_key1": "extra_value1",
-                         "extra_key2": 234}
-        kwargs_dict.update(kwargs_extras)
-        connection_result = action._resolve_connection(kwargs_dict)
+        kwargs = {'connection': None,
+                  'server': 'kwargs_server',
+                  'username': 'kwargs_user',
+                  'password': 'kwargs_password',
+                  "extra_key1": "extra_value1",
+                  "extra_key2": 234}
+        connection_expected = copy.deepcopy(kwargs)
+        connection_result = action._resolve_connection(**kwargs)
         self.assertEqual(connection_result, connection_expected)
-        self.assertEqual(kwargs_dict, kwargs_extras)
+
+    def test__resolve_connection_kwargs_overwrites_config(self):
+        action = self.get_action_instance(self.config_good)
+        connection_name = 'full'
+        connection_config = self.config_good['connections'][connection_name]
+        kwargs = {'connection': connection_name,
+                  'server': 'kwargs_server',
+                  'username': 'kwargs_user'}
+        connection_expected = copy.deepcopy(kwargs)
+        connection_expected['password'] = connection_config['password']
+        connection_expected['verify_ssl'] = connection_config['verify_ssl']
+        connection_result = action._resolve_connection(**kwargs)
+        self.assertEqual(connection_result, connection_expected)
 
     def test__validate_connection(self):
         action = self.get_action_instance(self.config_blank)
         connection = {}
-        for key, required, default in CONFIG_CONNECTION_KEYS:
-            if required:
-                connection[key] = "value_for_key_{}".format(key)
-
+        for key in ipa_action.CONNECTION_OPTIONS:
+            connection[key] = "dummy value"
         result = action._validate_connection(connection)
         self.assertTrue(result)
 
@@ -127,7 +102,7 @@ class TestActionLibBaseAction(FreeIPABaseActionTestCase):
     def test__validate_connection_none_raises(self):
         action = self.get_action_instance(self.config_blank)
         connection = {}
-        for key, required, default in CONFIG_CONNECTION_KEYS:
+        for key in ipa_action.CONNECTION_OPTIONS:
             connection[key] = None
 
         with self.assertRaises(KeyError):
@@ -148,7 +123,7 @@ class TestActionLibBaseAction(FreeIPABaseActionTestCase):
     def test__login_success(self):
         # setup
         action = self.get_action_instance(self.config_good)
-        connection = self.config_good['freeipa']['base']
+        connection = self.config_good['connections']['base']
 
         expected_session = "session123"
         mock_response = mock.Mock(cookies={'ipa_session': expected_session},
@@ -171,14 +146,13 @@ class TestActionLibBaseAction(FreeIPABaseActionTestCase):
         # verify
         mock_session.post.assert_called_with(url,
                                              headers=headers,
-                                             data=payload,
-                                             verify=False)
+                                             data=payload)
         self.assertEqual(result, expected_session)
 
     def test__login_error(self):
         # setup
         action = self.get_action_instance(self.config_good)
-        connection = self.config_good['freeipa']['base']
+        connection = self.config_good['connections']['base']
 
         mock_response = mock.Mock(cookies={'xxx': ''},
                                   reason=None,
@@ -201,13 +175,12 @@ class TestActionLibBaseAction(FreeIPABaseActionTestCase):
         # verify
         mock_session.post.assert_called_with(url,
                                              headers=headers,
-                                             data=payload,
-                                             verify=False)
+                                             data=payload)
 
     def test__login_http_error(self):
         # setup
         action = self.get_action_instance(self.config_good)
-        connection = self.config_good['freeipa']['base']
+        connection = self.config_good['connections']['base']
 
         mock_response = mock.Mock(cookies={'xxx': ''},
                                   reason=None,
@@ -230,22 +203,91 @@ class TestActionLibBaseAction(FreeIPABaseActionTestCase):
         # verify
         mock_session.post.assert_called_with(url,
                                              headers=headers,
-                                             data=payload,
-                                             verify=False)
+                                             data=payload)
+
+    def test__create_payload(self):
+        action = self.get_action_instance(self.config_good)
+
+        method = 'hostgroup_show'
+        args = IPA_COMMAND_ARGS_OPTIONS[method]['args']
+        options = IPA_COMMAND_ARGS_OPTIONS[method]['options']
+        kwargs = {
+            'method': method,
+        }
+        expected_args = []
+        for i, a in enumerate(args):
+            kwargs[a] = i
+            expected_args.append(i)
+
+        expected_options = {}
+        for i, o in enumerate(options):
+            kwargs[o] = i
+            expected_options[o] = i
+
+        result = action._create_payload(**kwargs)
+        self.assertEqual(result, {
+            "id": 0,
+            "method": method,
+            "params": [
+                expected_args,
+                expected_options,
+            ],
+        })
+
+    def test__create_payload_api_version(self):
+        action = self.get_action_instance(self.config_good)
+
+        method = 'hostgroup_show'
+        args = IPA_COMMAND_ARGS_OPTIONS[method]['args']
+        options = IPA_COMMAND_ARGS_OPTIONS[method]['options']
+        kwargs = {
+            'method': method,
+        }
+        expected_args = []
+        for i, a in enumerate(args):
+            kwargs[a] = i
+            expected_args.append(i)
+
+        expected_options = {}
+        for i, o in enumerate(options):
+            kwargs[o] = i
+            expected_options[o] = i
+        expected_options['version'] = 99
+
+        result = action._create_payload(api_version=99, **kwargs)
+        self.assertEqual(result, {
+            "id": 0,
+            "method": method,
+            "params": [
+                expected_args,
+                expected_options,
+            ],
+        })
 
     def test__execute_success(self):
         # setup
         action = self.get_action_instance(self.config_good)
-        connection = self.config_good['freeipa']['base']
+        connection = self.config_good['connections']['base']
 
         server = connection['server']
         session = "session123"
-        kwargs_dict = {'method': 'host_add',
-                       'args': [1, 2, 3],
-                       'options': {'a': 'b'}}
+        method = 'hostgroup_show'
+        args = IPA_COMMAND_ARGS_OPTIONS[method]['args']
+        options = IPA_COMMAND_ARGS_OPTIONS[method]['options']
+        kwargs = {
+            'method': method,
+        }
+        expected_args = []
+        for i, a in enumerate(args):
+            kwargs[a] = i
+            expected_args.append(i)
+
+        expected_options = {}
+        for i, o in enumerate(options):
+            kwargs[o] = i
+            expected_options[o] = i
 
         expected_dict = {'result': 'value'}
-        expected_result = (True, expected_dict)
         mock_response = mock.Mock(reason=None,
                                   status_code=200)
         mock_response.json.return_value = expected_dict
@@ -259,31 +301,42 @@ class TestActionLibBaseAction(FreeIPABaseActionTestCase):
                    "Content-Type": "application/json",
                    "Accept": "application/json"}
         payload = {"id": 0,
-                   "method": kwargs_dict['method'],
-                   "params": [kwargs_dict['args'],
-                              kwargs_dict['options']]}
+                   "method": kwargs['method'],
+                   "params": [expected_args,
+                              expected_options]}
 
         # execute
-        result = action._execute(session, server, kwargs_dict)
+        result = action._execute(session, server, **kwargs)
 
         # verify
         mock_session.post.assert_called_with(url,
                                              headers=headers,
                                              json=payload,
-                                             verify=False,
                                              cookies={'ipa_session': session})
-        self.assertEqual(result, expected_result)
+        self.assertEqual(result, (True, expected_dict))
 
     def test__execute_error(self):
         # setup
         action = self.get_action_instance(self.config_good)
-        connection = self.config_good['freeipa']['base']
+        connection = self.config_good['connections']['base']
 
         server = connection['server']
         session = "session123"
-        kwargs_dict = {'method': 'host_add',
-                       'args': [1, 2, 3],
-                       'options': {'a': 'b'}}
+        method = 'hostgroup_show'
+        args = IPA_COMMAND_ARGS_OPTIONS[method]['args']
+        options = IPA_COMMAND_ARGS_OPTIONS[method]['options']
+        kwargs = {
+            'method': method,
+        }
+        expected_args = []
+        for i, a in enumerate(args):
+            kwargs[a] = i
+            expected_args.append(i)
+
+        expected_options = {}
+        for i, o in enumerate(options):
+            kwargs[o] = i
+            expected_options[o] = i
 
         expected_dict = {'error': 'value'}
         expected_result = (False, expected_dict)
@@ -300,31 +353,42 @@ class TestActionLibBaseAction(FreeIPABaseActionTestCase):
                    "Content-Type": "application/json",
                    "Accept": "application/json"}
         payload = {"id": 0,
-                   "method": kwargs_dict['method'],
-                   "params": [kwargs_dict['args'],
-                              kwargs_dict['options']]}
+                   "method": kwargs['method'],
+                   "params": [expected_args,
+                              expected_options]}
 
         # execute
-        result = action._execute(session, server, kwargs_dict)
+        result = action._execute(session, server, **kwargs)
 
         # verify
         mock_session.post.assert_called_with(url,
                                              headers=headers,
                                              json=payload,
-                                             verify=False,
                                              cookies={'ipa_session': session})
         self.assertEqual(result, expected_result)
 
     def test__execute_http_error(self):
         # setup
         action = self.get_action_instance(self.config_good)
-        connection = self.config_good['freeipa']['base']
+        connection = self.config_good['connections']['base']
 
         server = connection['server']
         session = "session123"
-        kwargs_dict = {'method': 'host_add',
-                       'args': [1, 2, 3],
-                       'options': {'a': 'b'}}
+        method = 'hostgroup_show'
+        args = IPA_COMMAND_ARGS_OPTIONS[method]['args']
+        options = IPA_COMMAND_ARGS_OPTIONS[method]['options']
+        kwargs = {
+            'method': method,
+        }
+        expected_args = []
+        for i, a in enumerate(args):
+            kwargs[a] = i
+            expected_args.append(i)
+
+        expected_options = {}
+        for i, o in enumerate(options):
+            kwargs[o] = i
+            expected_options[o] = i
 
         mock_response = mock.Mock(reason=None,
                                   status_code=400)
@@ -338,105 +402,21 @@ class TestActionLibBaseAction(FreeIPABaseActionTestCase):
                    "Content-Type": "application/json",
                    "Accept": "application/json"}
         payload = {"id": 0,
-                   "method": kwargs_dict['method'],
-                   "params": [kwargs_dict['args'],
-                              kwargs_dict['options']]}
+                   "method": kwargs['method'],
+                   "params": [expected_args,
+                              expected_options]}
 
         # execute
         with self.assertRaises(requests.HTTPError):
-            action._execute(session, server, kwargs_dict)
+            action._execute(session, server, **kwargs)
 
         # verify
         mock_session.post.assert_called_with(url,
                                              headers=headers,
                                              json=payload,
-                                             verify=False,
                                              cookies={'ipa_session': session})
 
-    def test__execute_missing(self):
-        # setup
-        action = self.get_action_instance(self.config_good)
-        connection = self.config_good['freeipa']['base']
-
-        server = connection['server']
-        session = "session123"
-        kwargs_dict = {'method': 'host_add'}
-
-        expected_dict = {'result': 'value'}
-        expected_result = (True, expected_dict)
-        mock_response = mock.Mock(reason=None,
-                                  status_code=200)
-        mock_response.json.return_value = expected_dict
-
-        mock_session = mock.Mock()
-        mock_session.post.return_value = mock_response
-        action.session = mock_session
-
-        url = 'https://{0}/ipa/session/json'.format(server)
-        headers = {"referer": 'https://{0}/ipa'.format(server),
-                   "Content-Type": "application/json",
-                   "Accept": "application/json"}
-        payload = {"id": 0,
-                   "method": kwargs_dict['method'],
-                   "params": [[],   # args
-                              {}]}  # options
-
-        # execute
-        result = action._execute(session, server, kwargs_dict)
-
-        # verify
-        mock_session.post.assert_called_with(url,
-                                             headers=headers,
-                                             json=payload,
-                                             verify=False,
-                                             cookies={'ipa_session': session})
-        self.assertEqual(result, expected_result)
-
-    def test__execute_api_version(self):
-        # setup
-        action = self.get_action_instance(self.config_good)
-        connection = self.config_good['freeipa']['base']
-
-        server = connection['server']
-        session = "session123"
-        api_version = "1.234"
-        kwargs_dict = {'method': 'host_add',
-                       'args': [1, 2, 3],
-                       'options': {'a': 'b'}}
-
-        expected_dict = {'result': 'value'}
-        expected_result = (True, expected_dict)
-        mock_response = mock.Mock(reason=None,
-                                  status_code=200)
-        mock_response.json.return_value = expected_dict
-
-        mock_session = mock.Mock()
-        mock_session.post.return_value = mock_response
-        action.session = mock_session
-
-        url = 'https://{0}/ipa/session/json'.format(server)
-        headers = {"referer": 'https://{0}/ipa'.format(server),
-                   "Content-Type": "application/json",
-                   "Accept": "application/json"}
-        expected_options = copy.deepcopy(kwargs_dict)
-        expected_options['version'] = api_version
-        payload = {"id": 0,
-                   "method": kwargs_dict['method'],
-                   "params": [kwargs_dict['args'],
-                              kwargs_dict['options']]}
-
-        # execute
-        result = action._execute(session, server, kwargs_dict, api_version=api_version)
-
-        # verify
-        mock_session.post.assert_called_with(url,
-                                             headers=headers,
-                                             json=payload,
-                                             verify=False,
-                                             cookies={'ipa_session': session})
-        self.assertEqual(result, expected_result)
-
-    @mock.patch('lib.action.BaseAction._execute')
+    @mock.patch('ipa_action.IpaAction._execute')
     def test__get_api_version(self, mock__execute):
         # setup
         action = self.get_action_instance(self.config_blank)
@@ -454,7 +434,7 @@ class TestActionLibBaseAction(FreeIPABaseActionTestCase):
         # verify
         self.assertEqual(result, "1.234")
 
-    @mock.patch('lib.action.BaseAction._execute')
+    @mock.patch('ipa_action.IpaAction._execute')
     def test__get_api_version_missing(self, mock__execute):
         # setup
         action = self.get_action_instance(self.config_blank)
@@ -472,7 +452,7 @@ class TestActionLibBaseAction(FreeIPABaseActionTestCase):
         # verify
         self.assertEqual(result, None)
 
-    @mock.patch('lib.action.BaseAction._execute')
+    @mock.patch('ipa_action.IpaAction._execute')
     def test__get_api_version_bad_ping(self, mock__execute):
         # setup
         action = self.get_action_instance(self.config_blank)
@@ -490,7 +470,7 @@ class TestActionLibBaseAction(FreeIPABaseActionTestCase):
         # verify
         self.assertEqual(result, None)
 
-    @mock.patch('lib.action.BaseAction._execute')
+    @mock.patch('ipa_action.IpaAction._execute')
     def test__get_api_version_bad_regex(self, mock__execute):
         # setup
         action = self.get_action_instance(self.config_blank)
@@ -508,27 +488,33 @@ class TestActionLibBaseAction(FreeIPABaseActionTestCase):
         # verify
         self.assertEqual(result, None)
 
-    def test_run_existing_session(self):
+    def test_run_login_existing_session(self):
         # setup
         action = self.get_action_instance(self.config_blank)
         kwargs_dict = {'method': 'login',
                        'session': 'session123',
-                       'server': 'server.domain.tld'}
+                       'server': 'server.domain.tld',
+                       'username': 'test',
+                       'password': 'abc123',
+                       'verify_ssl': False}
 
         # execute
         result = action.run(**kwargs_dict)
 
         # verify
         self.assertEqual(result, 'session123')
+        self.assertEqual(action.session.verify, False)
 
-    @mock.patch('lib.action.BaseAction._login')
-    def test_run_missing_session(self, mock__login):
+    @mock.patch('ipa_action.IpaAction._login')
+    def test_run_login_missing_session(self, mock__login):
         # setup
         action = self.get_action_instance(self.config_blank)
         kwargs_dict = {'method': 'login',
                        'server': 'server.domain.tld',
+                       'session': None,
                        'username': 'username123',
-                       'password': 'password123'}
+                       'password': 'password123',
+                       'verify_ssl': True}
         mock__login.return_value = 'session123'
 
         # execute
@@ -536,27 +522,32 @@ class TestActionLibBaseAction(FreeIPABaseActionTestCase):
 
         # verify
         self.assertEqual(result, 'session123')
+        self.assertEqual(action.session.verify, True)
 
-    @mock.patch('lib.action.BaseAction._get_api_version')
-    @mock.patch('lib.action.BaseAction._execute')
+    @mock.patch('ipa_action.IpaAction._get_api_version')
+    @mock.patch('ipa_action.IpaAction._execute')
     def test_run_execute(self, mock__execute, mock__get_api_version):
         # setup
         action = self.get_action_instance(self.config_blank)
-        kwargs_dict = {'method': 'host_add',
-                       'session': 'session123',
-                       'server': 'server.domain.tld',
-                       'username': 'username123',
-                       'password': 'password123'}
+        kwargs = {'method': 'host_add',
+                  'session': 'session123',
+                  'server': 'server.domain.tld',
+                  'username': 'username123',
+                  'password': 'password123',
+                  'verify_ssl': True}
         mock__get_api_version.return_value = '1.234'
         mock__execute.return_value = (True, {'data': 'value'})
 
         # execute
-        result = action.run(**kwargs_dict)
+        result = action.run(**kwargs)
 
         # verify
         self.assertEqual(result, (True, {'data': 'value'}))
+        self.assertEqual(action.session.verify, True)
         mock__get_api_version.assert_called_with('session123', 'server.domain.tld')
         mock__execute.assert_called_with('session123',
                                          'server.domain.tld',
-                                         kwargs_dict,
-                                         api_version='1.234')
+                                         method='host_add',
+                                         api_version='1.234',
+                                         username='username123',
+                                         password='password123')
