@@ -214,7 +214,7 @@ class IpaApiParser(object):
         method_list.append(IPA_METHOD_LOGIN)
         with open(filename, 'r') as f:
             lines = f.read().splitlines()
-            method = None
+            method = {}
             for l in lines:
                 if l.startswith('command: '):
                     full_command = l.split('command: ')[1]
