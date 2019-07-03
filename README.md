@@ -22,7 +22,7 @@ Data types and payloads also mirror one-for-one.
 
 ``` yaml
 ---
-freeipa:
+connections:
   <credential-name-1>:
     server: <hostname or ip of the IPA server>
     user: <username@domain.tld (preferred) or domain\username>
@@ -38,8 +38,10 @@ freeipa:
 ## <a name="SchemaExample"></a> Schema Example
 ``` yaml
 ---
-freeipa:
-  abc:
+connections:
+  # note: if no 'connection' parameter is specified, then the 'default' connection
+  # from the pack config will be used
+  default:
     user: "userexample"
     password: "passwordexample"
     server: "serverexample"
@@ -54,33 +56,36 @@ freeipa:
            section for more information.
 
 # <a name="Actions"></a> Actions
-Actions in this pack are auto-generated based on the file `etc/cmd.txt` with all FreeIPA commands and descriptions using the generation script `etc/ipa_parser.py` to generate `etc/actions.txt` after which it renders an action yaml for each command using the Jinja2 template from `etc/action_template.yaml`. There is an action created for every "Command" in the FreeIPA API. Input and output parameters should be the same.
+Actions in this pack are auto-generated based on an API specfication file located in 
+`etc/spec/API-release-*.txt`. The specification file is the `API.txt` file in the
+[freeipa git repository](https://github.com/freeipa/freeipa). We then use that `API.txt`
+file to auto-generate all of our actions using the script `etc/generate_actions.py`.
+Each `command` in the API.txt generates a new action YAML file.
+FreeIPA commands are parsed and all `args` and `options` are added in as action parameters
+using their native StackStorm data types.
 
 ## <a name="Usage"></a> Usage
 
 ### <a name="BasicUsage"></a> Usage - Basic
 
-The actions that are created are fairly simplistic, simply executing the command passed in the `method` parameter using any arguments that are passed in via the `args` parameter, other parameters passed in the `params` parameter on the action, and credentials passed in the `server`, `user`, and `password` parameters.
+Actions created mirror the FreeIPA API, so passing in arguments and options 
 
 ``` shell
-st2 run freeipa.host_add args=hostname params=['all':True] server=server user=user password=xxx
-st2 run freeipa.host_del args=hostname params=['all':True] server=server user=user password=xxx
-st2 run freeipa.hostgroup_add_member args=hostgroupname params=['all':True, 'host':hostname] server=server user=user password=xxx
+st2 run freeipa.host_add fqdn='hostname.domain.tld' all=true
+st2 run freeipa.host_del fqdn='hostname.domain.tld' all=true
+st2 run freeipa.hostgroup_add_member cn='nameofhostgroup' all=true host=['hostname.domain.tld']
 ```
 
 The following example demonstrates running the `freeipa.host_add` action using action input parameters.
 
 ``` shell
-$ st2 run freeipa.host_add args=ipahostname.domain.tld params=['all':True] server=ipaserver.domain.tld user=administrator password=xxx
+$ st2 run freeipa.host_add fqdn='ipahostname.domain.tld all=true
 ..
 id: 59722f939900aa7b61ca9983
 status: succeeded
 parameters:
-  args: ipahostname.domain.tld
-  params: {}
-  password: '********'
-  server: ipaserver.domain.tld
-  user: administrator
+  fqdn: ipahostname.domain.tld
+  all: True
 result:
   exit_code: 0
   result:
@@ -110,7 +115,7 @@ in our config:
 ``` shell
 $ cat /opt/stackstorm/configs/freeipa.yaml
 ---
-freeipa:
+connections:
   prod:
     server: freeipa.domain.tld
     user: administrator
@@ -124,6 +129,31 @@ $ st2 run freeipa.login connection=prod
 ```
 
 This pays off big time when running multiple commands in sequence.
+
+
+### <a name="UsageConfig"></a> Usage - Config Connection Default
+
+To avoid repeated typing of the `connection` parameter this pack also supports
+the concept of a `default` connection. Simply specify a connection in the pack
+config with the name `default` and this connection will be used for all commands.
+
+
+``` shell
+$ cat /opt/stackstorm/configs/freeipa.yaml
+---
+connections:
+  default:
+    server: freeipa.domain.tld
+    user: administrator
+    password: xxx
+```
+
+Now we can omit the `connection` option when running our actions and the `default` connection will be used:
+
+``` shell
+$ st2 run freeipa.login
+```
+
 
 ### <a name="UsageLogin"></a> Usage - Login Sessions
 
@@ -225,7 +255,7 @@ Let's say we had a configuration file with the contents:
 
 ``` yaml
 ---
-freeipa:
+connections:
   abc:
     user: "userexample"
     password: "passwordexample"
